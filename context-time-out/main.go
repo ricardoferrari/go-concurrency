@@ -42,18 +42,28 @@ func main() {
 
 	request := make(chan string)
 
-	rootContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	rootContext, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	defer close(request)
 
 	wgListener.Add(2)
 	go worker(request, &wgListener, rootContext)
-
 	go produce(request, &wgListener, "Slow request", rootContext)
 
 	time.Sleep(2 * time.Second) // Wait to ensure context timeout occurs
 
+	wgListener.Add(1)
 	go produce(request, &wgListener, "Another slow request", rootContext)
+	
+	time.Sleep(2 * time.Second) // Wait to ensure context timeout occurs
+	
+	wgListener.Add(1)
+	go produce(request, &wgListener, "Yet another slow request", rootContext)
+	
+	time.Sleep(2 * time.Second) // Wait to ensure context timeout occurs
+	
+	wgListener.Add(1)
+	go produce(request, &wgListener, "Eventually another slow request", rootContext)
 
 	wgListener.Wait()
 
